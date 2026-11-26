@@ -375,3 +375,19 @@ describe('expected yield (XIRR)', () => {
     expect(s.xirr!).toBeLessThan(9);
   });
 });
+
+import { expectedYield } from '../src/summary';
+describe('expected yield (entered by the user)', () => {
+  it('shows the yield the user entered, averaged by amount invested', () => {
+    const terms = (isin: string) => ({ isin, name: isin, issuer: 'X', faceValue: 100000, couponRate: 11.65, frequency: 12 as const, couponType: 'fixed' as const, dayCount: 'ACT/ACT' as const, issueDate: '2025-09-15', maturityDate: '2031-03-15', verified: true });
+    const item = (id: string, amt: number, y?: number) => ({ holding: { id, portfolioId: 'p1', isin: id, units: 1, investedAmount: amt, acquiredOn: '2026-02-22', purchaseYield: y, trackedFrom: '2026-11-26' }, terms: terms(id), portfolio: { id: 'p1', name: 'p' } }) as any;
+    const one = summarise([item('A', 99056.05, 8.05)], '2026-11-26');
+    expect(one.enteredYield).toBe(8.05);
+    expect(expectedYield(one)).toBe(8.05); // not the computed 12.6%
+    const two = summarise([item('A', 100000, 8), item('B', 300000, 12), item('C', 50000)], '2026-11-26');
+    expect(two.enteredYield).toBe(11); // C has no yield: left out, not 0%
+    const none = summarise([item('C', 50000)], '2026-11-26');
+    expect(none.enteredYield).toBeNull();
+    expect(expectedYield(none)).toBe(none.xirr ?? none.avgCoupon);
+  });
+});

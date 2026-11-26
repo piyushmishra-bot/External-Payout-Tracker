@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { formatDate, formatDateNumeric, FREQUENCY_LABEL, inr, pct } from '@eh/core';
+import { expectedYield, formatDate, formatDateNumeric, FREQUENCY_LABEL, inr, pct } from '@eh/core';
 import { SearchPill, useApp, useLoad } from '../app';
 import { InvRow, KV, RowMenuBtn } from './Holdings';
 import { InvestmentSheet } from './AddFlow';
@@ -18,7 +18,7 @@ function TrackerBox({ d, hide, setHide }: { d: Overview; hide: boolean; setHide:
   const s = d.summary;
   const month = new Date(`${d.today}T00:00:00`).toLocaleDateString('en-IN', { month: 'short' }) + `’${d.today.slice(2, 4)}`;
   const H = (v: string) => (hide ? '********' : v);
-  const yld = s.xirr ?? s.avgCoupon;
+  const yld = expectedYield(s);
   return (
     <section className="bs-card" aria-label="Overview">
       <div className="bs-row" style={{ alignItems: 'flex-start' }}>

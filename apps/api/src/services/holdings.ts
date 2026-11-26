@@ -189,6 +189,14 @@ export class HoldingsService {
       const withYield = entered.filter((a) => a.purchaseYield != null);
       const weight = summary.principal + withYield.reduce((s, a) => s + a.investedAmount!, 0);
       if (weight) summary.avgCoupon = Math.round(((summary.avgCoupon * summary.principal + withYield.reduce((s, a) => s + a.investedAmount! * a.purchaseYield!, 0)) / weight) * 100) / 100;
+      // Entered yield, weighted by amount invested, across bonds with terms and these.
+      if (withYield.length) {
+        const known = items.filter((i) => i.holding.purchaseYield != null);
+        const w = (i: HoldingWithTerms) => i.holding.investedAmount ?? i.holding.units * i.terms.faceValue;
+        const num = known.reduce((s, i) => s + w(i) * i.holding.purchaseYield!, 0) + withYield.reduce((s, a) => s + a.investedAmount! * a.purchaseYield!, 0);
+        const den = known.reduce((s, i) => s + w(i), 0) + withYield.reduce((s, a) => s + a.investedAmount!, 0);
+        if (den) summary.enteredYield = Math.round((num / den) * 100) / 100;
+      }
       summary.principal = Math.round((summary.principal + enteredAmount) * 100) / 100;
       summary.invested = Math.round((summary.invested + enteredAmount) * 100) / 100;
       summary.holdingsCount += entered.length;

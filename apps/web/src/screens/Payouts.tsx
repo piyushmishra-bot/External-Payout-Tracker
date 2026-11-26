@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { formatDate, inr, MONTHS_SHORT, pct } from '@eh/core';
+import { expectedYield, formatDate, inr, MONTHS_SHORT, pct } from '@eh/core';
 import { SubHead, useApp, useLoad } from '../app';
 import { KV } from './Holdings';
 import type { Payout } from '../api/types';
@@ -43,7 +43,7 @@ export function PayoutsScreen({ initialDate }: { initialDate?: string }) {
         {/* As on BondScanner's Payout details: month-by-month chart (Interest / Principal, year), then Expected yield. */}
         <PayoutChart events={events.map((e) => ({ ...e, portfolioId: 'all' }))} today={today} series={[{ id: 'all', name: 'Payouts', color: '#1c398e' }]} title={null} year={Y} onYear={setYear} />
         <section className="bs-card slim">
-          <KV k="Expected yield" v={scoped.data?.summary.holdingsCount ? pct(Math.round((scoped.data.summary.xirr ?? scoped.data.summary.avgCoupon) * 100) / 100) : '–'} />
+          <KV k="Expected yield" v={scoped.data?.summary.holdingsCount ? pct(expectedYield(scoped.data.summary)) : '–'} />
         </section>
 
         {fetching > 0 && (

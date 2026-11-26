@@ -19,6 +19,11 @@ export interface PortfolioSummary {
   avgCoupon: number;
   /** Indicative XIRR, only when every holding has a purchase amount and date. */
   xirr: number | null;
+  /**
+   * The yield the user entered for each bond, averaged by amount invested (by principal where no amount).
+   * This is the Expected yield shown; null when no bond has an entered yield.
+   */
+  enteredYield: number | null;
   nextPayout: PayoutEvent | null;
   /** Amount the user has marked received, across tracked payouts. */
   receivedTotal: number;
@@ -68,6 +73,12 @@ export function summarise(
     xirrValue = xirr(flows);
   }
 
+  // Expected yield = what the user entered, weighted by what they paid. Bonds without a yield are left out, not taken as 0%.
+  const withYield = items.filter((h) => h.holding.purchaseYield != null);
+  const yWeight = (h: HoldingWithTerms) => h.holding.investedAmount ?? h.holding.units * h.terms.faceValue;
+  const yTotal = withYield.reduce((s, h) => s + yWeight(h), 0);
+  const enteredYield = yTotal ? Math.round((withYield.reduce((s, h) => s + yWeight(h) * h.holding.purchaseYield!, 0) / yTotal) * 100) / 100 : null;
+
   return {
     holdingsCount: items.length,
     principal,
@@ -77,6 +88,7 @@ export function summarise(
     interestThisMonth: round2(ev.filter((e) => e.date.startsWith(month)).reduce((s, e) => s + e.interest, 0)),
     avgCoupon: Math.round(avgCoupon * 100) / 100,
     xirr: xirrValue,
+    enteredYield,
     nextPayout: fut.find((e) => !received.has(e.key)) ?? null,
     receivedTotal: round2(ev.filter((e) => received.has(e.key)).reduce((s, e) => s + e.amount, 0)),
     unconfirmedCount: ev.filter((e) => e.date < today && payoutStatus(e, today, received) === 'not_marked').length,
@@ -199,4 +211,9 @@ export function taxStatement(
     totalInterest: round2(rows.reduce((s, r) => s + r.grossInterest, 0)),
     totalTds: round2(rows.reduce((s, r) => s + r.indicativeTds, 0)),
   };
+}
+
+/** The Expected yield shown to the user: the yield they entered; the computed yield only when none was entered. */
+export function expectedYield(s: Pick<PortfolioSummary, 'enteredYield' | 'xirr' | 'avgCoupon'>): number {
+  return Math.round((s.enteredYield ?? s.xirr ?? s.avgCoupon) * 100) / 100;
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { formatDate, formatDateNumeric, FREQUENCY_LABEL, inr, MONTHS_SHORT, pct } from '@eh/core';
+import { expectedYield, formatDate, formatDateNumeric, FREQUENCY_LABEL, inr, MONTHS_SHORT, pct } from '@eh/core';
 import { SubHead, useApp, useLoad } from '../app';
 import type { HoldingDto, Overview, Payout, PortfolioDto } from '../api/types';
 import { Icon, Sheet, Skeleton } from '../ui';
@@ -97,7 +97,7 @@ export function ReportScreen() {
           <Stat label="Active principal" info="Face value of bonds you still hold" value={inr(s.principal)} sub={`Across ${s.holdingsCount} ${s.holdingsCount === 1 ? 'bond' : 'bonds'}`} />
           <Stat label={`Interest · ${MONTHS_SHORT[m]} ’${today.slice(2, 4)}`} info="Interest due this month, before tax" value={inr(s.interestThisMonth)} sub="This month" />
           <Stat label="Expected returns" info="All interest still to come, till maturity, before tax" value={inr(s.expectedInterest)} sub="Till maturity" />
-          <Stat label="Expected yield" info="Average coupon, weighted by principal" value={s.holdingsCount ? pct(Math.round((s.xirr ?? s.avgCoupon) * 100) / 100) : '–'} sub="Annualised yield" green />
+          <Stat label="Expected yield" info="The yield you entered, averaged by amount invested" value={s.holdingsCount ? pct(expectedYield(s)) : '–'} sub="Annualised yield" green />
         </div>
 
         {/* Donuts */}
@@ -415,7 +415,7 @@ function share(d: Overview, today: string) {
     `My external bond holdings as on ${formatDateNumeric(today)}`,
     `Active principal: ${inr(s.principal)}`,
     `Expected returns: ${inr(Math.round(s.expectedInterest))}`,
-    `Expected yield: ${pct(s.avgCoupon)}`,
+    `Expected yield: ${pct(expectedYield(s))}`,
     s.nextPayout ? `Next payout: ${inr(Math.round(s.nextPayout.amount))} on ${formatDate(s.nextPayout.date)}` : '',
   ]
     .filter(Boolean)
