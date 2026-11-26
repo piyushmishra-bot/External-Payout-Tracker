@@ -1,0 +1,23 @@
+{
+  "name": "external-holdings",
+  "private": true,
+  "version": "0.1.0",
+  "description": "BondScanner External Holdings: consolidated bond portfolio, payout calendar and reminders",
+  "workspaces": [
+    "packages/core",
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "test": "npm run test -w packages/core && npm run test -w apps/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "worker:reminders": "npm run worker -w apps/api",
+    "build:demo": "npm run build:demo -w apps/web",
+    "build:vercel": "node scripts/build-vercel.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

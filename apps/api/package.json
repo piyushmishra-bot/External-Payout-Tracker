@@ -1,0 +1,40 @@
+{
+  "name": "@eh/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "migrate": "tsx src/migrate.ts",
+    "seed": "tsx src/seed.ts",
+    "worker": "tsx src/notify/worker.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "make:test-files": "tsx scripts/make-test-files.ts",
+    "import:directory": "tsx scripts/import-directory.ts",
+    "sync:bondscanner": "tsx scripts/sync-bondscanner.ts"
+  },
+  "dependencies": {
+    "@eh/core": "0.1.0",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/multipart": "^9.0.0",
+    "exceljs": "^4.4.0",
+    "fastify": "^5.2.0",
+    "pdfjs-dist": "^4.10.38",
+    "pg": "^8.13.0",
+    "zod": "^3.24.0"
+  },
+  "optionalDependencies": {
+    "tesseract.js": "^5.1.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "pdf-lib": "^1.17.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.4"
+  }
+}
