@@ -17,7 +17,7 @@ const NOTE = 'Payouts are calculated from each bond’s terms and are shown befo
 function TrackerBox({ d, hide, setHide }: { d: Overview; hide: boolean; setHide: (b: boolean) => void }) {
   const s = d.summary;
   const month = new Date(`${d.today}T00:00:00`).toLocaleDateString('en-IN', { month: 'short' }) + `’${d.today.slice(2, 4)}`;
-  const H = (v: string) => (hide ? '••••' : v);
+  const H = (v: string) => (hide ? '********' : v);
   const yld = s.xirr ?? s.avgCoupon;
   return (
     <section className="bs-card" aria-label="Overview">
@@ -29,7 +29,7 @@ function TrackerBox({ d, hide, setHide }: { d: Overview; hide: boolean; setHide:
           <div className="bs-big">{H(inr(s.interestThisMonth))}</div>
         </div>
         <button className="eye-btn" onClick={() => setHide(!hide)} aria-label={hide ? 'Show amounts' : 'Hide amounts'} data-track="overview_eye">
-          <Icon name={hide ? 'eye-off-line' : 'eye-line'} size={20} />
+          <PhIcon name={hide ? 'eye-closed' : 'eye'} size={18} />
         </button>
       </div>
       <div className="bs-kvs">
@@ -85,7 +85,7 @@ export function ExternalScreen({ detailsId }: { detailsId?: string }) {
       <div className={`bs-page ${allData && !has ? 'bs-narrow' : ''}`}>
         <header className="ep-hero">
           <h1>External bonds portfolio</h1>
-          <p>Track the bonds you hold outside BondScanner: your portfolio, upcoming payouts and maturity dates in one place.</p>
+          <p>Track the bonds you hold outside BondScanner, your portfolio, upcoming payouts and maturity dates in one place.</p>
         </header>
         <AssistedStatus />
 
@@ -107,7 +107,7 @@ export function ExternalScreen({ detailsId }: { detailsId?: string }) {
                 Overview
               </h2>
               <button className="ov-add ov-link m-only" onClick={() => go({ name: 'payouts' })} data-track="payout_details_link">
-                <u>Payout details</u>
+                <u>External payout details</u>
                 <Icon name="arrow-right-s-line" size={20} />
               </button>
             </div>
@@ -117,7 +117,7 @@ export function ExternalScreen({ detailsId }: { detailsId?: string }) {
             {/* Portfolio report below the investments (BondScanner shows its report entry the same way). */}
             <section className="stack-sm" aria-labelledby="rep-h">
               <h2 id="rep-h" className="bs-h2" style={{ margin: 0 }}>
-                Portfolio report
+                External portfolio tracker
               </h2>
               <div className="bs-card report-row">
                 <span className="report-ic" aria-hidden="true">
@@ -140,13 +140,13 @@ export function ExternalScreen({ detailsId }: { detailsId?: string }) {
           <aside className="c-side">
             <div className="stack-sm d-only">
               <h2 className="bs-h2" style={{ margin: 0 }}>
-                Payout details
+                External payout details
               </h2>
               {/* Same card as "Payout details" on BondScanner Holdings */}
               <div className="pd-card">
                 <div className="pd-text">
                   <b>See month by month breakdown</b>
-                  <span>View all your payouts</span>
+                  <span>View all your external holdings payouts</span>
                   <button className="btn btn-primary pd-btn" onClick={() => go({ name: 'payouts' })} data-track="open_tracker">
                     Open tracker
                   </button>
@@ -189,7 +189,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'How do I add my bonds?',
-    a: 'Click Add external holdings and choose one of the following: Enter details, to type the ISIN, issuer name, date of investment, yield, units and investment amount for each bond; or Upload a file, to upload our Excel or CSV template with one bond per row. If you have a broker statement or screenshot instead, share it with us and we will add your holdings within 24 hours.',
+    a: 'Click Add external holdings and choose one of the following, Enter details, to type the ISIN, issuer name, date of investment, yield, units and investment amount for each bond; or Upload a file, to upload our Excel or CSV template with one bond per row. If you have a broker statement or screenshot instead, share it with us and we will add your holdings within 24 hours.',
   },
   {
     q: 'Where do the payout dates and amounts come from?',
@@ -328,7 +328,7 @@ function Investments({ d, hide, q, detailsId }: { d: Overview; hide: boolean; q:
           const rows = d.holdings.filter((h) => hit(`${h.name} ${h.issuer} ${h.isin}`) && (view === 'matured' ? h.matured : !h.matured));
           const aw = view === 'matured' ? [] : d.awaiting.filter((a) => hit(`${a.isin} ${a.name}`));
           const isEditing = editing === p.id;
-          const H = (v: string) => (hide ? '••••' : v);
+          const H = (v: string) => (hide ? '********' : v);
           const acts = (ref: BondRef) => (
             <span className="row-acts" onClick={(e) => e.stopPropagation()}>
               <button className="icon-btn" aria-label={`Edit ${ref.isin}`} title="Edit" onClick={() => setBond({ kind: 'edit', b: ref })} data-track="row_edit">

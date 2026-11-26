@@ -35,7 +35,7 @@ export function ReportScreen() {
   if (!d || !rep.data || !pays.data || !all.data)
     return (
       <>
-        <SubHead title="Portfolio report" onBack={() => go({ name: 'external' })} />
+        <SubHead title="External portfolio tracker" onBack={() => go({ name: 'external' })} />
         <div className="bs-page">
           <Skeleton h={60} />
           <Skeleton h={180} />
@@ -59,44 +59,29 @@ export function ReportScreen() {
   const totalP = byHolding.reduce((a, x) => a + x.principal, 0) || 1;
   const m = Number(today.slice(5, 7)) - 1;
   // With one holding, "by holding" says nothing: show issuers instead.
-  const byH = scope === 'all' && byHolding.length > 1;
+  // No holding names: always by issuer, one series, one breakdown for all external bonds.
+  const byH = false;
+  const merged = [{ p: { ...(byHolding[0]?.p ?? portfolios[0]), id: 'all', name: 'External bonds', ownerLabel: null } as PortfolioDto, hs: byHolding.flatMap((x) => x.hs), principal: byHolding.reduce((a, x) => a + x.principal, 0), returns: byHolding.reduce((a, x) => a + x.returns, 0), yld: totalP ? byHolding.reduce((a, x) => a + x.yld * x.principal, 0) / totalP : 0 }];
 
   return (
     <>
       <div className="noprint">
-        <SubHead title="Overview of your external portfolio" onBack={() => go({ name: 'external' })} big />
+        <SubHead title="External portfolio tracker" onBack={() => go({ name: 'external' })} big />
       </div>
       <div className="bs-page rp" id="report">
         <p className="tiny-note">Includes only bonds added from other platforms. Bonds bought on BondScanner are not included.</p>
         <span className="print-only rp-print-head">BondScanner · External holdings report · as on {formatDateNumeric(today)}</span>
 
-        {/* Header bar: holding picker + actions */}
+        {/* Header bar: no holding names (one view of all external bonds); Download only. */}
         <div className="rp-bar">
-          {portfolios.length > 1 ? (
-            <button className="rp-pick" onClick={() => setPicker(true)} aria-haspopup="dialog">
-              <b>{scope === 'all' ? `All external holdings (${portfolios.length})` : portfolios.find((p) => p.id === scope)?.name}</b>
-              <Icon name="arrow-down-s-line" size={18} />
-            </button>
-          ) : (
-            <span className="rp-pick">
-              <b>All external holdings (1)</b>
-            </span>
-          )}
-          <span className="rp-avatars" aria-hidden="true">
-            {portfolios.slice(0, 3).map((p) => (
-              <i key={p.id}>{initial(p.ownerLabel ?? p.name)}</i>
-            ))}
-            {portfolios.length > 3 && <i>+{portfolios.length - 3}</i>}
+          <span className="rp-pick">
+            <b>
+              All external bonds ({d.holdings.length + d.awaiting.length})
+            </b>
           </span>
           <span className="rp-actions noprint">
-            <button aria-label="Email this report" onClick={() => share(d, today)}>
-              <Icon name="mail-line" size={20} />
-            </button>
-            <button aria-label="Download report" onClick={() => setDl(true)}>
+            <button aria-label="Download report" onClick={() => setDl(true)} data-track="report_download">
               <Icon name="download-2-line" size={20} />
-            </button>
-            <button aria-label="Help" onClick={() => go({ name: 'external' })}>
-              <Icon name="customer-service-2-line" size={20} />
             </button>
           </span>
         </div>
@@ -109,10 +94,10 @@ export function ReportScreen() {
 
         {/* Summary cards */}
         <div className="rp-stats">
-          <Stat label="Active principal" info="Face value of bonds you still hold" value={inr(s.principal)} sub={`Across ${shown.length} ${shown.length === 1 ? 'holding' : 'holdings'}`} />
+          <Stat label="Active principal" info="Face value of bonds you still hold" value={inr(s.principal)} sub={`Across ${s.holdingsCount} ${s.holdingsCount === 1 ? 'bond' : 'bonds'}`} />
           <Stat label={`Interest · ${MONTHS_SHORT[m]} ’${today.slice(2, 4)}`} info="Interest due this month, before tax" value={inr(s.interestThisMonth)} sub="This month" />
           <Stat label="Expected returns" info="All interest still to come, till maturity, before tax" value={inr(s.expectedInterest)} sub="Till maturity" />
-          <Stat label="Expected yield" info="Average coupon, weighted by principal" value={s.holdingsCount ? pct(s.avgCoupon) : '–'} sub="Annualised yield" green />
+          <Stat label="Expected yield" info="Average coupon, weighted by principal" value={s.holdingsCount ? pct(Math.round((s.xirr ?? s.avgCoupon) * 100) / 100) : '–'} sub="Annualised yield" green />
         </div>
 
         {/* Donuts */}
@@ -144,9 +129,9 @@ export function ReportScreen() {
           />
         </div>
 
-        <PayoutChart events={pays.data.payouts} today={today} series={shown.map((p) => ({ id: p.id, name: p.name, color: colorOf(p.id) }))} />
+        <PayoutChart events={pays.data.payouts.map((e) => ({ ...e, portfolioId: 'all' }))} today={today} series={[{ id: 'all', name: 'External bonds', color: colorOf('all') }]} />
 
-        <Breakdown rows={byHolding} future={future} colorOf={colorOf} />
+        <Breakdown rows={merged.filter((m) => m.p)} future={future.map((e) => ({ ...e, portfolioId: 'all' }))} colorOf={colorOf} />
 
         <p className="bs-note">
           <b>Disclaimer:</b> External holdings are based on the files or details you added and may not match your demat account exactly. Interest is paid only to whoever holds the bond on the record date set by the issuer. Amounts are before tax. Not investment advice.

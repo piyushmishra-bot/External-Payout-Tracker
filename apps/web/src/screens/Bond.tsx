@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatDate, formatDateNumeric, FREQUENCY_LABEL, inr, pct } from '@eh/core';
 import { SubHead, useApp, useLoad } from '../app';
 import type { Payout } from '../api/types';
-import { initialsOf, Skeleton, StatusBadge } from '../ui';
+import { Icon, initialsOf, Skeleton, StatusBadge } from '../ui';
 import { PayoutSheet } from './Payouts';
 
 /**
@@ -45,18 +45,12 @@ export function BondScreen({ id }: { id: string }) {
   const past = events.filter((e) => e.date < today);
   const totalInterest = upcoming.reduce((a, e) => a + e.interest, 0);
 
+  // Only the details BondScanner's Holdings shows for a bond.
   const rows: [string, string][] = [
     ['ISIN', h.isin],
-    ['Holding', portfolio?.name ?? '–'],
     ['Total units', String(h.units)],
     ['Total invested', h.investedAmount ? inr(h.investedAmount) : '–'],
-    ['Active principal', inr(h.principal)],
-    ['Coupon rate', `${h.couponRate.toFixed(2)}% p.a.`],
-    ['Interest payment', FREQUENCY_LABEL[h.frequency]],
-    ['Credit rating', h.rating],
     ['Maturity date', formatDateNumeric(h.maturityDate)],
-    ['Interest receivable till maturity', inr(totalInterest)],
-    ['Data source', h.verified ? 'Exchange data' : 'Details you entered (to be verified)'],
   ];
 
   return (
@@ -90,6 +84,11 @@ export function BondScreen({ id }: { id: string }) {
           {(h.investedOn || h.purchaseYield != null || h.investedAmount) && (
             <>
               <h3 className="bs-h2">Transactions</h3>
+              <div className="wrap txn-tabs" role="group" aria-label="Transactions">
+                <button className="chip" aria-pressed="true">
+                  Buy transactions
+                </button>
+              </div>
               <div className="txn">
                 <span className="l">
                   <b>{h.investedOn ? `Invested on ${formatDateNumeric(h.investedOn)}` : 'Investment'}</b>
@@ -105,15 +104,17 @@ export function BondScreen({ id }: { id: string }) {
         </div>
 
         <aside className="bond-side">
-          <h3 className="bs-h2">{upcoming.length === 1 ? 'Upcoming payout' : 'Upcoming payouts'}</h3>
+          <h3 className="bs-h2">Upcoming external payouts</h3>
           {upcoming.length ? (
             <div className="up-list">
-              {upcoming.slice(0, showPast ? undefined : 6).map((e) => (
+              {/* The next payout; the rest open and close with View all / Hide. */}
+              {upcoming.slice(0, showPast ? undefined : 1).map((e) => (
                 <PayRow key={e.key} e={e} onOpen={setOpen} />
               ))}
-              {upcoming.length > 6 && !showPast && (
-                <button className="link" style={{ alignSelf: 'flex-start' }} onClick={() => setShowPast(true)}>
-                  Show all {upcoming.length} payouts till maturity
+              {upcoming.length > 1 && (
+                <button className="up-toggle" onClick={() => setShowPast(!showPast)} aria-expanded={showPast} data-track="bond_payouts_toggle">
+                  <u>{showPast ? 'Hide payouts' : `View all ${upcoming.length} payouts till maturity`}</u>
+                  <Icon name={showPast ? 'arrow-up-s-line' : 'arrow-down-s-line'} size={18} />
                 </button>
               )}
             </div>

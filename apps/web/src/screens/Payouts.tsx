@@ -38,20 +38,8 @@ export function PayoutsScreen({ initialDate }: { initialDate?: string }) {
 
   return (
     <>
-      <SubHead title="Payout details" onBack={() => go({ name: 'external' })} />
+      <SubHead title="External payout details" onBack={() => go({ name: 'external' })} />
       <div className="bs-page">
-        {portfolios.length > 1 && (
-          <div className="wrap" role="group" aria-label="Show holding">
-            <button className="chip" aria-pressed={scope === 'all'} onClick={() => setScope('all')}>
-              All
-            </button>
-            {portfolios.map((p) => (
-              <button key={p.id} className="chip" aria-pressed={scope === p.id} onClick={() => setScope(p.id)}>
-                {p.name}
-              </button>
-            ))}
-          </div>
-        )}
         {/* As on BondScanner's Payout details: month-by-month chart (Interest / Principal, year), then Expected yield. */}
         <PayoutChart events={events.map((e) => ({ ...e, portfolioId: 'all' }))} today={today} series={[{ id: 'all', name: 'Payouts', color: '#1c398e' }]} title={null} year={Y} onYear={setYear} />
         <section className="bs-card slim">
@@ -185,8 +173,6 @@ export function PayoutSheet({ date, events, onClose, onChanged }: { date: string
               <StatusBadge status={e.status} />
             </div>
             <dl className="dl">
-              <dt>Portfolio</dt>
-              <dd>{e.portfolioName}</dd>
               <dt>Interest</dt>
               <dd>{inr(e.interest)}</dd>
               {e.principal > 0 && (

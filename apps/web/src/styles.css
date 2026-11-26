@@ -1704,3 +1704,12 @@ table.hold-rt.hold-rt th:nth-child(4) { width: 124px; }
 
 /* "Payout details >" beside Overview only where the right-hand card is not shown */
 @media (min-width: 768px) { .ov-link.m-only { display: none; } }
+
+/* Eye like BondScanner: small bordered square, Phosphor eye */
+.eye-btn { width: 32px; height: 32px; border-radius: 8px; color: var(--text-title); }
+/* Bond page */
+.txn-tabs { margin: -4px 0 4px; }
+.up-toggle { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding: 4px 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 500; color: var(--brand); cursor: pointer; }
+.up-toggle u { text-underline-offset: 3px; }
+.up-toggle svg { color: var(--text-muted); }
+.txn-tabs .chip[aria-pressed="true"] { background: #eef2ff; color: var(--brand); border: 1px solid var(--brand); font-weight: 500; }
