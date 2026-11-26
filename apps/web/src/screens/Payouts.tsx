@@ -4,6 +4,7 @@ import { SubHead, useApp, useLoad } from '../app';
 import { KV } from './Holdings';
 import type { Payout } from '../api/types';
 import { Icon, Sheet, Skeleton, StatusBadge } from '../ui';
+import { PayoutChart } from './Report';
 
 
 
@@ -37,7 +38,7 @@ export function PayoutsScreen({ initialDate }: { initialDate?: string }) {
 
   return (
     <>
-      <SubHead title="Payout calendar" onBack={() => go({ name: 'external' })} />
+      <SubHead title="Payout details" onBack={() => go({ name: 'external' })} />
       <div className="bs-page">
         {portfolios.length > 1 && (
           <div className="wrap" role="group" aria-label="Show holding">
@@ -51,9 +52,10 @@ export function PayoutsScreen({ initialDate }: { initialDate?: string }) {
             ))}
           </div>
         )}
+        {/* As on BondScanner's Payout details: month-by-month chart (Interest / Principal, year), then Expected yield. */}
+        <PayoutChart events={events.map((e) => ({ ...e, portfolioId: 'all' }))} today={today} series={[{ id: 'all', name: 'Payouts', color: '#1c398e' }]} title={null} year={Y} onYear={setYear} />
         <section className="bs-card slim">
-          <KV k={`Interest in ${Y}`} v={inr(yearEvents.reduce((s, e) => s + e.interest, 0))} />
-          <KV k="Expected yield" v={scoped.data?.summary.holdingsCount ? pct(scoped.data.summary.avgCoupon) : '–'} />
+          <KV k="Expected yield" v={scoped.data?.summary.holdingsCount ? pct(Math.round((scoped.data.summary.xirr ?? scoped.data.summary.avgCoupon) * 100) / 100) : '–'} />
         </section>
 
         {fetching > 0 && (
@@ -64,22 +66,9 @@ export function PayoutsScreen({ initialDate }: { initialDate?: string }) {
 
         {past.length > 0 && <PastToConfirm past={past} onOpen={setOpenDate} />}
 
-        <div className="bs-row">
-          <h2 className="bs-h2" style={{ margin: 0 }}>
-            Payouts
-          </h2>
-          <label className="year-pill">
-            <span className="sr-only">Year</span>
-            <select value={Y} onChange={(e) => setYear(Number(e.target.value))}>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-            <Icon name="arrow-down-s-line" size={18} />
-          </label>
-        </div>
+        <h2 className="bs-h2" style={{ margin: 0 }}>
+          Payouts
+        </h2>
         {!all.data ? (
           <Skeleton h={180} />
         ) : !yearEvents.length ? (

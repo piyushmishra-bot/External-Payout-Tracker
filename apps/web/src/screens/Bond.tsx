@@ -89,7 +89,7 @@ export function BondScreen({ id }: { id: string }) {
 
           {(h.investedOn || h.purchaseYield != null || h.investedAmount) && (
             <>
-              <h3 className="bs-h2">Investment</h3>
+              <h3 className="bs-h2">Transactions</h3>
               <div className="txn">
                 <span className="l">
                   <b>{h.investedOn ? `Invested on ${formatDateNumeric(h.investedOn)}` : 'Investment'}</b>

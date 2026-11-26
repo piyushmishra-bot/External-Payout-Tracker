@@ -1660,3 +1660,47 @@ table.hold-rt.hold-rt th:nth-child(2) { width: 96px; }
 table.hold-rt.hold-rt th:nth-child(3) { width: 140px; }
 table.hold-rt.hold-rt th:nth-child(4) { width: 124px; }
 .pay-rt .nm { display: block; }
+
+/* ---------- Tracker main page, like BondScanner Holdings ---------- */
+.eye-btn { width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text-title); cursor: pointer; }
+.inv-head { gap: 12px; }
+.inv-head .bs-h2 { margin-right: auto; }
+.view-pill { margin-left: auto; }
+.inv-thead { display: flex; justify-content: space-between; padding: 12px 24px; }
+.inv-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 20px; align-items: center; gap: 14px; padding: 16px 24px; border-top: 1px solid var(--border); }
+.inv-row:has(.row-acts) { grid-template-columns: 40px minmax(0, 1fr) auto auto; }
+.inv-row.tap { cursor: pointer; }
+.inv-row.tap:hover { background: var(--bg-subtle); }
+.inv-row .bs-logo { width: 40px; height: 40px; }
+.inv-mid { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.inv-nm { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inv-isin { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--text-subtle); display: flex; align-items: center; gap: 6px; }
+.inv-end { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.inv-amt { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text-title); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.inv-units { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--text-subtle); white-space: nowrap; }
+.inv-chev { color: var(--text-subtle); }
+.inv-empty { padding: 20px 24px; border-top: 1px solid var(--border); font-size: 14px; font-weight: 500; color: var(--text-muted); }
+.inv-row .row-acts { display: inline-flex; gap: 2px; }
+@media (max-width: 767px) {
+  .inv-thead { padding: 12px 16px; }
+  .inv-row { padding: 14px 16px; gap: 12px; }
+  .hold-card .hold-bar { display: none; }
+}
+/* Portfolio report, below the investments */
+.report-row { display: flex; align-items: center; gap: 16px; padding: 20px 24px; }
+.report-ic { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-lg); background: #eef2ff; color: var(--brand); }
+.report-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.report-t b { font-size: 16px; line-height: 24px; font-weight: 600; color: var(--text-title); }
+.report-t span { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text-muted); }
+.report-btn { white-space: nowrap; }
+@media (max-width: 767px) { .report-row { flex-wrap: wrap; padding: 16px; } .report-btn { width: 100%; } }
+/* Payout details card (right column), like BondScanner Holdings */
+.pd-card { position: relative; overflow: hidden; display: flex; min-height: 180px; padding: 28px 24px; border: 1px solid var(--border); border-radius: var(--r-xl); background: linear-gradient(135deg, #eef2ff 0%, #ffffff 75%); }
+.pd-text { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pd-text b { font-size: 18px; line-height: 26px; font-weight: 600; color: var(--brand); }
+.pd-text span { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text-muted); }
+.pd-btn { margin-top: 12px; height: 40px; padding: 0 20px; font-size: 14px; font-weight: 600; }
+.pd-art { position: absolute; right: -14px; bottom: -2px; width: 220px; height: 130px; }
+
+/* "Payout details >" beside Overview only where the right-hand card is not shown */
+@media (min-width: 768px) { .ov-link.m-only { display: none; } }

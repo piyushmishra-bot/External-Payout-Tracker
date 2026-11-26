@@ -243,10 +243,12 @@ const fmtShare = (x: number) => {
   return `${v >= 10 ? v.toFixed(1).replace(/\.0$/, '') : v.toFixed(2).replace(/0$/, '')}%`;
 };
 
-function PayoutChart({ events, today, series }: { events: Payout[]; today: string; series: { id: string; name: string; color: string }[] }) {
+export function PayoutChart({ events, today, series, title = 'Payouts by month', year: yearIn, onYear }: { events: Payout[]; today: string; series: { id: string; name: string; color: string }[]; title?: string | null; year?: number; onYear?: (y: number) => void }) {
   const [kind, setKind] = useState<'interest' | 'principal'>('interest');
   const years = [...new Set(events.map((e) => Number(e.date.slice(0, 4))))].sort();
-  const [year, setYear] = useState(Number(today.slice(0, 4)));
+  const [yearOwn, setYearOwn] = useState(Number(today.slice(0, 4)));
+  const year = yearIn ?? yearOwn;
+  const setYear = (y: number) => (onYear ? onYear(y) : setYearOwn(y));
   const [sel, setSel] = useState<number | null>(null);
   const data = useMemo(
     () =>
@@ -263,10 +265,12 @@ function PayoutChart({ events, today, series }: { events: Payout[]; today: strin
 
   return (
     <section className="bs-card rp-chart" aria-labelledby="pc-h">
-      <h2 id="pc-h" className="bs-h2" style={{ margin: 0 }}>
-        Payouts by month
-      </h2>
-      <div className="bs-row" style={{ marginTop: 14 }}>
+      {title && (
+        <h2 id="pc-h" className="bs-h2" style={{ margin: 0 }}>
+          {title}
+        </h2>
+      )}
+      <div className="bs-row" style={{ marginTop: title ? 14 : 0 }}>
         <span className="pills" role="group" aria-label="Show">
           <button aria-pressed={kind === 'interest'} onClick={() => setKind('interest')}>
             Interest
@@ -278,7 +282,7 @@ function PayoutChart({ events, today, series }: { events: Payout[]; today: strin
         <label className="year-pill">
           <span className="sr-only">Year</span>
           <select value={year} onChange={(e) => (setYear(Number(e.target.value)), setSel(null))}>
-            {(years.length ? years : [year]).map((y) => (
+            {(years.length ? (years.includes(year) ? years : [...years, year].sort()) : [year]).map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>

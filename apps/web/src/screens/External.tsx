@@ -13,36 +13,30 @@ type BondRef = { id: string; isin: string; name: string; units: number; acquired
 const SHOW_PAYOUTS = true;
 const NOTE = 'Payouts are calculated from each bond’s terms and are shown before TDS. Actual credits may differ slightly with holidays and record dates.';
 
-/** Overview like BondScanner's Holdings: interest this month, then principal, returns and yield. */
-function TrackerBox({ d, hide }: { d: Overview; hide: boolean }) {
+/** Overview like BondScanner's Holdings: interest this month (eye hides the figures), then principal, returns and yield. */
+function TrackerBox({ d, hide, setHide }: { d: Overview; hide: boolean; setHide: (b: boolean) => void }) {
   const s = d.summary;
   const month = new Date(`${d.today}T00:00:00`).toLocaleDateString('en-IN', { month: 'short' }) + `’${d.today.slice(2, 4)}`;
-  const all = [...d.holdings, ...d.awaiting];
   const H = (v: string) => (hide ? '••••' : v);
   const yld = s.xirr ?? s.avgCoupon;
   return (
     <section className="bs-card" aria-label="Overview">
-      <div>
-        <div className="bs-label">
-          Interest <span className="dot-sep">•</span> {month}
+      <div className="bs-row" style={{ alignItems: 'flex-start' }}>
+        <div>
+          <div className="bs-label">
+            Interest <span className="dot-sep">•</span> {month}
+          </div>
+          <div className="bs-big">{H(inr(s.interestThisMonth))}</div>
         </div>
-        <div className="bs-big">{H(inr(s.interestThisMonth))}</div>
+        <button className="eye-btn" onClick={() => setHide(!hide)} aria-label={hide ? 'Show amounts' : 'Hide amounts'} data-track="overview_eye">
+          <Icon name={hide ? 'eye-off-line' : 'eye-line'} size={20} />
+        </button>
       </div>
       <div className="bs-kvs">
-        <KV k="Total investment" v={H(inr(s.invested))} />
         <KV k="Active principal" v={H(inr(s.principal))} />
         <KV k="Expected returns" v={H(inr(s.expectedInterest))} />
         <KV k="Expected yield" v={H(pct(Math.round(yld * 100) / 100))} green={!hide} />
-        <KV k="Total no. of bonds" v={H(String(all.length))} />
       </div>
-      {s.nextPayout && (
-        <div className="next-pay">
-          <Icon name="calendar-event-line" size={16} />
-          <span>
-            Next payout <b>{H(inr(s.nextPayout.amount))}</b> on {formatDate(s.nextPayout.date)} from {s.nextPayout.bondName}
-          </span>
-        </div>
-      )}
     </section>
   );
 }
@@ -112,21 +106,31 @@ export function ExternalScreen({ detailsId }: { detailsId?: string }) {
               <h2 className="bs-h2" style={{ margin: 0 }}>
                 Overview
               </h2>
-              <button className="ov-add ov-link" onClick={() => go({ name: 'payouts' })} data-track="payout_details_link">
+              <button className="ov-add ov-link m-only" onClick={() => go({ name: 'payouts' })} data-track="payout_details_link">
                 <u>Payout details</u>
                 <Icon name="arrow-right-s-line" size={20} />
               </button>
             </div>
-            {d ? <TrackerBox d={d} hide={hide} /> : <div className="ep-wait" aria-busy="true" />}
+            {d ? <TrackerBox d={d} hide={hide} setHide={setHide} /> : <div className="ep-wait" aria-busy="true" />}
 
             {d && <Investments d={d} hide={hide} q={q} detailsId={detailsId} />}
-            {SHOW_PAYOUTS && d && <UpcomingPayouts scope={scope} hide={hide} />}
-            <section className="promo report-card m-only">
-              <b>Portfolio report</b>
-              <span>Returns, payouts by month and how your money is spread across issuers and ratings.</span>
-              <button className="btn btn-outline" onClick={() => go({ name: 'report' })} data-track="report_card_m">
-                View report
-              </button>
+            {/* Portfolio report below the investments (BondScanner shows its report entry the same way). */}
+            <section className="stack-sm" aria-labelledby="rep-h">
+              <h2 id="rep-h" className="bs-h2" style={{ margin: 0 }}>
+                Portfolio report
+              </h2>
+              <div className="bs-card report-row">
+                <span className="report-ic" aria-hidden="true">
+                  <Icon name="pie-chart-2-line" size={22} />
+                </span>
+                <span className="report-t">
+                  <b>See your full report</b>
+                  <span>Returns, payouts by month and how your money is spread across issuers and ratings.</span>
+                </span>
+                <button className="btn btn-outline report-btn" onClick={() => go({ name: 'report' })} data-track="report_card">
+                  View report
+                </button>
+              </div>
             </section>
             <Faq />
             <p className="bs-note d-only">
@@ -136,27 +140,33 @@ export function ExternalScreen({ detailsId }: { detailsId?: string }) {
           <aside className="c-side">
             <div className="stack-sm d-only">
               <h2 className="bs-h2" style={{ margin: 0 }}>
-                Portfolio report
+                Payout details
               </h2>
-              <div className="promo report-card">
-                <b>See your full report</b>
-                <span>Returns, payouts by month and how your money is spread across issuers and ratings.</span>
-                <button className="btn btn-outline" onClick={() => go({ name: 'report' })} data-track="report_card">
-                  View report
-                </button>
-              </div>
-            </div>
-            <div className="stack-sm">
-              <h2 className="bs-h2 d-only" style={{ margin: 0 }}>
-                Update external holdings
-              </h2>
-              {/* Same pattern as bondscanner.com's "Payout details" card: title, one line, one button. */}
-              <div className="promo up-card">
-                <b>Keep your holdings up to date</b>
-                <span>Add new bonds or update existing ones in a few steps.</span>
-                <button className="btn btn-primary" onClick={() => go({ name: 'add' })} data-track="update_card_upload">
-                  Upload external holdings
-                </button>
+              {/* Same card as "Payout details" on BondScanner Holdings */}
+              <div className="pd-card">
+                <div className="pd-text">
+                  <b>See month by month breakdown</b>
+                  <span>View all your payouts</span>
+                  <button className="btn btn-primary pd-btn" onClick={() => go({ name: 'payouts' })} data-track="open_tracker">
+                    Open tracker
+                  </button>
+                </div>
+                <svg className="pd-art" viewBox="0 0 220 130" aria-hidden="true">
+                  <rect x="40" y="88" width="34" height="42" rx="3" fill="#dbe4fb" />
+                  <rect x="92" y="70" width="34" height="60" rx="3" fill="#dbe4fb" />
+                  <rect x="144" y="44" width="34" height="86" rx="3" fill="#dbe4fb" />
+                  <rect x="196" y="30" width="34" height="100" rx="3" fill="#dbe4fb" />
+                  <path d="M20 98 L66 96 L92 70 L150 66 L170 44" fill="none" stroke="#6b8ff5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M176 38 L214 18" fill="none" stroke="#22c55e" strokeWidth="3" strokeDasharray="6 6" strokeLinecap="round" />
+                  <g>
+                    <rect x="4" y="86" width="84" height="24" rx="12" fill="#fff" stroke="#e5e7eb" />
+                    <text x="46" y="102" textAnchor="middle" fontSize="9" fill="#101828">Interest payout</text>
+                  </g>
+                  <g>
+                    <rect x="104" y="36" width="92" height="24" rx="12" fill="#fff" stroke="#e5e7eb" />
+                    <text x="150" y="52" textAnchor="middle" fontSize="9" fill="#101828">Principal payout</text>
+                  </g>
+                </svg>
               </div>
             </div>
             <p className="bs-note m-only">
@@ -271,22 +281,10 @@ function Investments({ d, hide, q, detailsId }: { d: Overview; hide: boolean; q:
   const [sheet, setSheet] = useState<{ kind: 'menu' | 'rename' | 'delete'; p: PortfolioDto } | null>(null);
   // One bond: its menu, the edit form, or the remove confirmation.
   const [bond, setBond] = useState<{ kind: 'menu' | 'edit' | 'remove'; b: BondRef } | null>(null);
-  const [showMatured, setShowMatured] = useState(false);
+  // Active or matured bonds, like the Active ▾ filter on BondScanner Holdings.
+  const [view, setView] = useState<'active' | 'matured'>('active');
   // Holding in edit mode (name, delete, per-row edit and remove), like the BondScanner watchlist.
   const [editing, setEditing] = useState<string | null>(null);
-  // Phones: the right side shows one detail at a time; tapping the header label cycles it (like the BondScanner watchlist).
-  const METRICS = [
-    { key: 'amount', label: 'Investment amount' },
-    { key: 'next', label: 'Next payout' },
-    { key: 'maturity', label: 'Maturity' },
-    { key: 'coupon', label: 'Coupon' },
-  ] as const;
-  // Next payout per bond (from the payout schedule), for the table.
-  const pay = useLoad(() => api.payouts({}), [d.today]);
-  const nextOf = new Map<string, { date: string; amount: number }>();
-  for (const e of pay.data?.payouts ?? []) if (e.date >= d.today && !nextOf.has(e.holdingId)) nextOf.set(e.holdingId, { date: e.date, amount: e.amount });
-  const [metricIx, setMetricIx] = useState(0);
-  const metric = METRICS[metricIx].key;
   const ql = q.trim().toLowerCase();
   const hit = (text: string) => !ql || text.toLowerCase().includes(ql);
   // One view for all holdings: every bond in a single table.
@@ -299,6 +297,14 @@ function Investments({ d, hide, q, detailsId }: { d: Overview; hide: boolean; q:
     <>
       <div className="inv-head">
         <h2 className="bs-h2">Investments</h2>
+        <label className="year-pill view-pill">
+          <span className="sr-only">Show</span>
+          <select value={view} onChange={(e) => setView(e.target.value as 'active' | 'matured')} data-track="inv_view">
+            <option value="active">Active</option>
+            <option value="matured">Matured</option>
+          </select>
+          <Icon name="arrow-down-s-line" size={18} />
+        </label>
         {/* Phones: add and edit as icons, like the BondScanner watchlist */}
         <span className="inv-icons">
           {isEditingAny ? (
@@ -318,129 +324,87 @@ function Investments({ d, hide, q, detailsId }: { d: Overview; hide: boolean; q:
         </span>
       </div>
       <div className="bs-table hold-card">
-      {groups.map((p) => {
-        const rows = d.holdings.filter((h) => hit(`${h.name} ${h.issuer} ${h.isin}`) && (showMatured || !h.matured));
-        const aw = d.awaiting.filter((a) => hit(`${a.isin} ${a.name}`));
-        return (
-          <div key={p.id}>
-            <HoldingBar editing={editing === p.id} onEdit={() => setEditing(p.id)} onDone={() => setEditing(null)} />
-            {(() => {
-              // Consolidated view: what the user holds (units, amount, date, yield). Bond terms and payouts are hidden for now.
-              const entries = [
-                ...rows.map((h) => ({ key: h.id, name: h.name, sub: h.isin, units: h.units, invested: h.investedAmount ?? h.principal, on: h.investedOn ?? null, yld: h.purchaseYield ?? null, coupon: h.couponRate as number | null, maturity: h.matured ? null : (h.maturityDate as string | null), matured: h.matured, next: nextOf.get(h.id) ?? null, open: true, ref: { id: h.id, isin: h.isin, name: h.name, units: h.units, acquiredOn: h.investedOn ?? undefined, investedAmount: h.investedAmount ?? undefined, purchaseYield: h.purchaseYield ?? undefined } as BondRef })),
-                ...aw.map((a) => {
-                  const nm = a.name && a.name !== 'Details awaited' ? a.name : a.isin;
-                  return { key: a.id, name: nm, sub: a.investedOn ? `Invested ${formatDate(a.investedOn)}` : '', units: a.units, invested: a.investedAmount ?? null, on: a.investedOn ?? null, yld: a.purchaseYield ?? null, coupon: null as number | null, maturity: null as string | null, matured: false, next: null as { date: string; amount: number } | null, open: false, ref: { id: a.id, isin: a.isin, name: nm, units: a.units, acquiredOn: a.investedOn, investedAmount: a.investedAmount, purchaseYield: a.purchaseYield, issuerName: nm !== a.isin ? nm : undefined, awaiting: true } as BondRef };
-                }),
-              ];
-              const HIDDEN = '••••';
-              const money = (v: number | null) => (v == null ? '–' : hide ? `₹${HIDDEN}` : inr(v));
-              const yieldOf = (v: number | null) => (v == null ? '–' : hide ? HIDDEN : pct(v));
-              const dateOf = (v: string | null) => (!v ? '–' : hide ? HIDDEN : formatDateNumeric(v));
-              const isEditing = editing === p.id;
-              return (
-                <>
-                  <table className={`rt hold-rt d-only ${isEditing ? 'editing' : 'viewing'}`}>
-                    <thead>
-                      <tr>
-                        <th>Issuer</th>
-                        <th>Coupon</th>
-                        <th>Next payout</th>
-                        <th>Maturity</th>
-                        <th>Investment amount</th>
-                        {isEditing && <th aria-label="Actions" />}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {entries.map((e) => (
-                        <tr key={e.key} className={e.open && !isEditing ? 'tap' : undefined} onClick={e.open && !isEditing ? () => go({ name: 'bond', id: e.key }) : undefined} data-track={e.open && !isEditing ? 'row_open_bond' : undefined}>
-                          <td>
-                            <span className="nm trunc" title={e.name}>{e.name}</span>
-                            {e.name !== e.ref.isin && <span className="isin">{e.ref.isin}</span>}
-                          </td>
-                          <td>{e.coupon == null ? '–' : `${pct(e.coupon)}`}</td>
-                          <td>
-                            {e.open ? (
-                              e.next ? (
-                                <>
-                                  <span className="nm">{dateOf(e.next.date)}</span>
-                                  <span className="isin">{money(e.next.amount)}</span>
-                                </>
-                              ) : (
-                                '–'
-                              )
-                            ) : (
-                              <span className="muted-tag">Details awaited</span>
-                            )}
-                          </td>
-                          <td>{e.matured ? 'Matured' : dateOf(e.maturity)}</td>
-                          <td>{money(e.invested)}</td>
-                          {isEditing && (
-                          <td>
-                            <span className="row-acts">
-                              <button className="icon-btn" aria-label={`Edit ${e.ref.isin}`} title="Edit" onClick={() => setBond({ kind: 'edit', b: e.ref })} data-track="row_edit">
-                                <Icon name="pencil-line" size={16} />
-                              </button>
-                              <button className="icon-btn" aria-label={`Remove ${e.ref.isin}`} title="Remove" onClick={() => setBond({ kind: 'remove', b: e.ref })} data-track="row_remove">
-                                <Icon name="close-line" size={18} />
-                              </button>
-                            </span>
-                          </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div className="m-only m-list">
-                    {/* Phones, like the BondScanner watchlist: name and ISIN on the left; amount and yield (or date) on the right. */}
-                    <div className="bs-thead m-thead">
-                      <span>Issuer</span>
-                      <button className="m-switch" onClick={() => setMetricIx((metricIx + 1) % METRICS.length)} data-track="m_toggle_metric" aria-label={`Showing ${METRICS[metricIx].label}. Tap to show ${METRICS[(metricIx + 1) % METRICS.length].label}`}>
-                        <Icon name="arrow-left-right-line" size={16} />
-                        <u>{METRICS[metricIx].label}</u>
-                      </button>
-                    </div>
-                    {entries.map((e) => (
-                      <div className={`m-row ${e.open && !isEditing ? 'tap' : ''}`} key={e.key} onClick={e.open && !isEditing ? () => go({ name: 'bond', id: e.key }) : undefined}>
-                        <span className="bs-logo" aria-hidden="true">
-                          {initialsOf(e.name)}
-                        </span>
-                        <span className="m-mid">
-                          <span className="m-nm">{e.name}</span>
-                          <span className="m-isin">{e.ref.isin}</span>
-                        </span>
-                        <span className="m-end">
-                          {metric === 'amount' && <span className="m-val">{money(e.invested)}</span>}
-                          {metric === 'next' && <span className="m-val">{!e.open ? 'Awaited' : e.next ? dateOf(e.next.date) : '–'}</span>}
-                          {metric === 'maturity' && <span className="m-val">{e.matured ? 'Matured' : dateOf(e.maturity)}</span>}
-                          {metric === 'coupon' && <span className="m-val green">{e.coupon == null ? '–' : pct(e.coupon)}</span>}
-                        </span>
-                        {isEditing && (
-                          <span className="row-acts">
-                            <button className="icon-btn" aria-label={`Edit ${e.ref.isin}`} onClick={() => setBond({ kind: 'edit', b: e.ref })} data-track="row_edit">
-                              <Icon name="pencil-line" size={16} />
-                            </button>
-                            <button className="icon-btn" aria-label={`Remove ${e.ref.isin}`} onClick={() => setBond({ kind: 'remove', b: e.ref })} data-track="row_remove">
-                              <Icon name="close-line" size={18} />
-                            </button>
-                          </span>
-                        )}
-                      </div>
-                    ))}
+        {groups.map((p) => {
+          const rows = d.holdings.filter((h) => hit(`${h.name} ${h.issuer} ${h.isin}`) && (view === 'matured' ? h.matured : !h.matured));
+          const aw = view === 'matured' ? [] : d.awaiting.filter((a) => hit(`${a.isin} ${a.name}`));
+          const isEditing = editing === p.id;
+          const H = (v: string) => (hide ? '••••' : v);
+          const acts = (ref: BondRef) => (
+            <span className="row-acts" onClick={(e) => e.stopPropagation()}>
+              <button className="icon-btn" aria-label={`Edit ${ref.isin}`} title="Edit" onClick={() => setBond({ kind: 'edit', b: ref })} data-track="row_edit">
+                <Icon name="pencil-line" size={16} />
+              </button>
+              <button className="icon-btn" aria-label={`Remove ${ref.isin}`} title="Remove" onClick={() => setBond({ kind: 'remove', b: ref })} data-track="row_remove">
+                <Icon name="close-line" size={18} />
+              </button>
+            </span>
+          );
+          return (
+            <div key={p.id}>
+              <HoldingBar editing={isEditing} onEdit={() => setEditing(p.id)} onDone={() => setEditing(null)} />
+              <div className="bs-thead inv-thead">
+                <span>Issuer</span>
+                <span>{view === 'matured' ? 'Investment amount' : 'Active principal'}</span>
+              </div>
+              {rows.map((h) => {
+                const ref: BondRef = { id: h.id, isin: h.isin, name: h.name, units: h.units, acquiredOn: h.investedOn ?? undefined, investedAmount: h.investedAmount ?? undefined, purchaseYield: h.purchaseYield ?? undefined };
+                const open = () => go({ name: 'bond', id: h.id });
+                return (
+                  <div
+                    key={h.id}
+                    className={`inv-row ${isEditing ? '' : 'tap'}`}
+                    onClick={isEditing ? undefined : open}
+                    onKeyDown={(e) => !isEditing && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), open())}
+                    role={isEditing ? undefined : 'link'}
+                    tabIndex={isEditing ? undefined : 0}
+                    data-track={isEditing ? undefined : 'row_open_bond'}
+                  >
+                    <span className="bs-logo" aria-hidden="true">
+                      {initialsOf(h.name)}
+                    </span>
+                    <span className="inv-mid">
+                      <span className="inv-nm" title={h.name}>
+                        {h.name}
+                      </span>
+                      <span className="inv-isin">{h.isin}</span>
+                    </span>
+                    <span className="inv-end">
+                      <span className="inv-amt">{H(inr(view === 'matured' ? h.investedAmount ?? h.units * h.faceValue : h.principal))}</span>
+                      <span className="inv-units">({H(String(h.units))} units)</span>
+                    </span>
+                    {isEditing ? acts(ref) : <Icon name="arrow-right-s-line" size={20} className="inv-chev" />}
                   </div>
-                </>
-              );
-            })()}
-          </div>
-        );
-      })}
+                );
+              })}
+              {aw.map((a) => {
+                const nm = a.name && a.name !== 'Details awaited' ? a.name : a.isin;
+                const ref: BondRef = { id: a.id, isin: a.isin, name: nm, units: a.units, acquiredOn: a.investedOn, investedAmount: a.investedAmount, purchaseYield: a.purchaseYield, issuerName: nm !== a.isin ? nm : undefined, awaiting: true };
+                return (
+                  <div key={a.id} className="inv-row">
+                    <span className="bs-logo" aria-hidden="true">
+                      {initialsOf(nm)}
+                    </span>
+                    <span className="inv-mid">
+                      <span className="inv-nm" title={nm}>
+                        {nm}
+                      </span>
+                      <span className="inv-isin">
+                        {a.isin} <span className="muted-tag">Details awaited</span>
+                      </span>
+                    </span>
+                    <span className="inv-end">
+                      <span className="inv-amt">{a.investedAmount ? H(inr(a.investedAmount)) : '–'}</span>
+                      <span className="inv-units">({H(String(a.units))} units)</span>
+                    </span>
+                    {isEditing ? acts(ref) : <span className="inv-chev-gap" />}
+                  </div>
+                );
+              })}
+              {!rows.length && !aw.length && <div className="inv-empty">{view === 'matured' ? 'No matured bonds yet.' : 'No active bonds.'}</div>}
+            </div>
+          );
+        })}
       </div>
-      {matured > 0 && (
-        <button className="bs-band boxed" onClick={() => setShowMatured(!showMatured)}>
-          <u>{showMatured ? 'Hide matured investments' : `View ${matured} matured ${matured === 1 ? 'investment' : 'investments'}`}</u>
-          <Icon name={showMatured ? 'arrow-up-s-line' : 'arrow-right-s-line'} size={20} />
-        </button>
-      )}
       {!any && <div className="bs-card empty">No bonds match your search.</div>}
 
       {fill && (
